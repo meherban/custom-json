@@ -1,0 +1,4 @@
+name = Custom task
+description = Custom Module for task done
+core = 7.x
+package = custom
