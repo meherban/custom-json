@@ -1,0 +1,82 @@
+<?php
+
+function custom_task_form_system_site_information_settings_alter(&$form, $form_state, $form_id) {
+
+		global $conf;
+
+		if (isset($conf['siteapikey'])) {  
+					$form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Update Configuration'));
+		}
+
+		$form['site_information']['custom_task_site_api_key'] = array(
+				'#type' => 'textfield',
+				'#title' => t('Site API Key'),
+				'#default_value' => variable_get('siteapikey', 'No APi key'),
+		);
+		$form['#submit'][] = 'custom_task_handler';
+}
+
+function custom_task_handler($form, &$form_state) {
+		global $conf;
+
+		variable_set('siteapikey', $form_state['values']['custom_task_site_api_key']);
+
+		if (isset($conf['siteapikey'])) {  
+				drupal_set_message(t('The settings for the Site API Key has been saved with that value '). variable_get('siteapikey'));
+		}
+
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function custom_task_menu() {
+// for URL page_json/siteapikey/nid 
+
+  $menu['page_json/%/%'] = array(
+      'title' => 'Node to Json',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('_node_to_json_converter'),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );
+  
+  return $menu;
+}
+
+/**
+ * Converter given node to its json value.
+ */
+function _node_to_json_converter() {
+
+  $arg = arg();
+  $access = FALSE;
+  
+  // for URL page_json/siteapikey/nid only
+
+
+    if ($arg[0] == 'page_json' && $arg[1] == variable_get('siteapikey') && variable_get('siteapikey') != '' and variable_get('siteapikey') != NULL and variable_get('siteapikey') != 'No APi key' ) {
+
+      if ($node = node_load ($arg[2]) ) {
+
+        // Should be 'Page' content type only and should be published.
+        if ( $node->type == 'page' && ($node->status ==1) ) {
+
+		  // Display JSON data of given node
+		  print json_encode($node);
+		  $access = TRUE;
+	      exit;
+        }		
+      }
+   
+  }
+
+  // 'Access Denied'.
+  if ( $access == FALSE) {
+	 //print 'Access Denied';  
+	 drupal_set_message('Access Denied' , 'error');
+  }
+}
+
+
